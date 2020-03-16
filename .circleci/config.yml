@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  build_test:
+  build:
     working_directory: ~/code
     docker:
       - image: circleci/android:api-29
@@ -28,6 +28,10 @@ jobs:
           destination: reports
       - store_test_results:
           path: app/build/test-results
+  test:
+    docker:
+      - image: circleci/android:api-29
+    steps:
       - run:
           name: Build debug APK and release APK
           command: |
