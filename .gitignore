@@ -177,5 +177,4 @@ fabric.properties
 
 !/fastlane/.env
 !/fastlane/keys/
-!/fastlane/keys/
 !/Gemfile.lock
