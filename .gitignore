@@ -12,6 +12,7 @@
 *.class
 
 # Generated files
+fastlane/keys
 bin/
 gen/
 out/
@@ -73,6 +74,8 @@ fastlane/Preview.html
 fastlane/screenshots
 fastlane/test_output
 fastlane/readme.md
+fastlane/.env
+Gemfile.lock
 
 # Version control
 vcs.xml
@@ -172,3 +175,7 @@ fabric.properties
 # Editor-based Rest Client
 .idea/httpRequests
 
+!/fastlane/.env
+!/fastlane/keys/
+!/fastlane/keys/
+!/Gemfile.lock
