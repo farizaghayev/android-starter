@@ -95,7 +95,7 @@ workflows:
           filters:
             branches:
               only:
-                - develop
+                - master
     jobs:
       - instrumentation-tests
 
