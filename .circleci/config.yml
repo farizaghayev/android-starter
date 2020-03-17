@@ -1,168 +1,126 @@
-base_job: &base_job
-  resource_class: xlarge
-  docker:
-    - image: circleci/android:api-29
-  working_directory: '~/project'
-  environment:
-    TERM: dumb
-    ADB_INSTALL_TIMEOUT: 8
-    GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
-
 version: 2
-jobs:
-  build:
-    <<: *base_job
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - v5-android-{{ checksum "build.gradle" }}-{{ checksum  "app/build.gradle" }}
-            - v5-android-
-      - run: make bootstrap-circle
-      - run: ./gradlew dependencies
-      - save_cache:
-          key: v5-android-{{ checksum "build.gradle" }}-{{ checksum  "app/build.gradle" }}
-          paths:
-            - ~/.gradle
-            - ~/.android
-      - run: ./gradlew assembleExternalRelease
-      - persist_to_workspace:
-          root: ~/project
-          paths:
-            - ./
 
-  test:
-    <<: *base_job
+defaults: &defaults
+  docker:
+    - image: circleci/android:api-28
+  environment:
+    JVM_OPTS: -Xmx3200m
+
+jobs:
+  unit-tests:
+    <<: *defaults
     steps:
       - checkout
       - restore_cache:
-          keys:
-            - v5-android-{{ checksum "build.gradle" }}-{{ checksum  "app/build.gradle" }}
-            - v5-android-
-      - attach_workspace:
-          at: ~/project
-      - run: ./gradlew checkstyle
-      - run: ./gradlew lintExternalRelease
-      - run: ./gradlew testExternalRelease -PdisablePreDex
+          key: jars-{{ checksum "build.gradle" }}-{{ checksum  "app/build.gradle" }}
+      - run:
+          name: Install fastlane
+          command: bundle install
+      - run:
+          name: Run the unit tests
+#          command: bundle exec fastlane unit_tests
+          command: bundle exec fastlane test
       - store_artifacts:
           path: app/build/reports
-          destination: reports
-      - store_artifacts:
-          path: app/build/outputs
-          destination: tests
-
-  create_alpha:
-    <<: *base_job
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - v5-android-{{ checksum "build.gradle" }}-{{ checksum  "app/build.gradle" }}
-            - v5-android-
-      - attach_workspace:
-          at: ~/project
-      - run:
-          name: push to alpha branch
-          command: make alpha
-
-  alpha:
-    <<: *base_job
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - v5-android-{{ checksum "build.gradle" }}-{{ checksum  "app/build.gradle" }}
-            - v5-android-
-      - restore_cache:
-          keys:
-            - v1-bundler-{{ checksum "Gemfile.lock" }}
-            - v1-bundler-
-      - run:
-          name: Bundle install
-          command: bundle check || bundle install --path vendor/bundle
       - save_cache:
-          key: v1-bundler-{{ checksum "Gemfile.lock" }}
           paths:
-            - ./vendor/bundle
-      - attach_workspace:
-          at: ~/project
-      - run:
-          name: Deploy Alpha to Crashlytics
-          command: bundle exec fastlane alpha
+            - ~/.gradle
+          key: jars-{{ checksum "build.gradle" }}-{{ checksum  "app/build.gradle" }}
 
-  create_internal:
-    <<: *base_job
+  instrumentation-tests:
+    <<: *defaults
     steps:
       - checkout
       - restore_cache:
-          keys:
-            - v5-android-{{ checksum "build.gradle" }}-{{ checksum  "app/build.gradle" }}
-            - v5-android-
-      - attach_workspace:
-          at: ~/project
+          key: jars-{{ checksum "build.gradle" }}-{{ checksum  "app/build.gradle" }}
       - run:
-          name: push to internal branch
-          command: make internal
-
-  internal:
-    <<: *base_job
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - v5-android-{{ checksum "build.gradle" }}-{{ checksum  "app/build.gradle" }}
-            - v5-android-
-      - restore_cache:
-          keys:
-            - v1-bundler-{{ checksum "Gemfile.lock" }}
-            - v1-bundler-
+          name: Install fastlane
+          command: bundle install
       - run:
-          name: Bundle install
-          command: bundle check || bundle install --path vendor/bundle
-      - save_cache:
-          key: v1-bundler-{{ checksum "Gemfile.lock" }}
-          paths:
-            - ./vendor/bundle
-      - attach_workspace:
-          at: ~/project
+          name: Store service account
+          command: echo $GCLOUD_SERVICE_KEY > ${HOME}/gcloud-service-key.json
       - run:
-          name: Deploy Internal to Crashlytics and S3
+          name: Authorize to gcloud
+          command: gcloud auth activate-service-account --key-file=${HOME}/gcloud-service-key.json --project=${GOOGLE_PROJECT_ID}
+      - run:
+          name: Run the instrumentation tests in Firebase test lab
           command: bundle exec fastlane test
+#          command: bundle exec fastlane instrumentation_tests
+      - save_cache:
+          paths:
+            - ~/.gradle
+          key: jars-{{ checksum "build.gradle" }}-{{ checksum  "app/build.gradle" }}
+
+  deploy-internal:
+    <<: *defaults
+    steps:
+      - checkout
+      - restore_cache:
+          key: jars-{{ checksum "build.gradle" }}-{{ checksum  "app/build.gradle" }}
+      - run:
+          name: Install fastlane
+          command: bundle install
+      - run:
+          name: Store the google play key
+          command: echo $GOOGLE_PLAY_KEY > gplay_key.json
+      - run:
+          name: Init fastlane supply
+          command: bundle exec fastlane supply init
+      - run:
+          name: Download ci's data
+          command: ./ci/download_ci_data.sh
+      - run:
+          name: Deploy the app to the internal track
+#          command: bundle exec fastlane deploy_internal
+      - command: bundle exec fastlane test
+      - save_cache:
+          paths:
+            - ~/.gradle
+          key: jars-{{ checksum "build.gradle" }}-{{ checksum  "app/build.gradle" }}
 
 workflows:
   version: 2
-  build_and_test:
-    jobs:
-      - build
-      - test:
-          requires:
-            - build
-      - alpha:
-          requires:
-            - build
-            - test
-          filters:
-            branches:
-              only: alpha
-      - create_internal:
-          requires:
-            - build
-            - test
-          filters:
-            branches:
-              only: master
-      - internal:
-          requires:
-            - build
-            - test
-          filters:
-            branches:
-              only: internal
 
-experimental:
-  notify:
-    branches:
-      only:
-        - master
-        - alpha
-        - internal
+  develop:
+    jobs:
+      - unit-tests
+
+  nighly:
+    triggers:
+      - schedule:
+          cron: "0 3 * * *"
+          filters:
+            branches:
+              only:
+                - develop
+    jobs:
+      - instrumentation-tests
+
+  deploy-internal:
+    jobs:
+      - unit-tests:
+          filters:
+            branches:
+              only:
+                - /internal.*/
+      - instrumentation-tests:
+          filters:
+            branches:
+              only:
+                - /internal.*/
+      - hold:
+          type: approval
+          filters:
+            branches:
+              only:
+                - /internal.*/
+          requires:
+            - unit-tests
+            - instrumentation-tests
+      - deploy-internal:
+          filters:
+            branches:
+              only:
+                - /internal.*/
+          requires:
+            - hold
