@@ -20,7 +20,7 @@ platform :android do
   lane :instrumentation_tests do
     assemble_debug
     assemble_android_test
-    sh("../ci/run_firebase_tests.sh")
+
   end
 
   desc "Deploy the app to the internal track"
