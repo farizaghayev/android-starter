@@ -95,7 +95,7 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - develop
     jobs:
       - instrumentation-tests
 
@@ -105,12 +105,12 @@ workflows:
           filters:
             branches:
               only:
-                - /internal.*/
+                - master
       - instrumentation-tests:
           filters:
             branches:
               only:
-                - /internal.*/
+                - master
       - hold:
           type: approval
           filters:
@@ -124,6 +124,6 @@ workflows:
           filters:
             branches:
               only:
-                - /internal.*/
+                - master
           requires:
             - hold
