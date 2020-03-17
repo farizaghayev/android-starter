@@ -1,8 +1,8 @@
 version: 2
 jobs:
   build:
-    macos:
-      xcode: "11.3"
+    docker:
+      - image: circleci/android:api-29
     working_directory: ~/code
     environment:
       FL_OUTPUT_DIR: output
