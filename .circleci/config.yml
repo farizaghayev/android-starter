@@ -92,7 +92,7 @@ jobs:
 workflows:
   ma-retail-android_workflow:
     jobs:
-      - validate_code:
+      - validate_code
       - deploy:
           requires:
             - validate_code
