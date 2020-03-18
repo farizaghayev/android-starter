@@ -31,8 +31,6 @@ commands:
           destination: reports
       - store_test_results:
           path: app/build/test-results
-  firebase_instrument_test:
-    steps:
       - run:
           name: Build debug APK and release APK for Firebase Test Lab
           command: |
@@ -68,12 +66,6 @@ jobs:
       - checkout
       - build
       - test
-  instrument_test:
-    executor: android
-    steps:
-      - checkout
-      - firebase_instrument_test
-
   deploy:
     executor: android
     steps:
@@ -83,8 +75,6 @@ workflows:
   ma-retail-android_workflow:
     jobs:
       - build_test:
-          context: BUILD
-      - instrument_test:
           context: BUILD
       - deploy:
           context: MOBILE_DEV
@@ -97,7 +87,6 @@ workflows:
           context: MOBILE_PROD
           requires:
             - build_test
-            - instrument_test
           filters:
             branches:
               only: master
