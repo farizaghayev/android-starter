@@ -96,11 +96,11 @@ workflows:
             - test
           filters:
             branches:
-              only: development
+              only: master
 
 experimental:
   notify:
     branches:
       only:
         - master
-        - development
+        - develop
