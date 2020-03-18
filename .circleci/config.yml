@@ -96,7 +96,7 @@ workflows:
             - test
           filters:
             branches:
-              only: master
+              only: development
 
 experimental:
   notify:
