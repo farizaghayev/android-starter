@@ -96,6 +96,13 @@ workflows:
       - deploy:
           requires:
             - validate_code
+            - deploy_beta
+          filters:
+            branches:
+              only: develop
+      - deploy:
+          requires:
+            - validate_code
             - deploy_prod
           filters:
             branches:
