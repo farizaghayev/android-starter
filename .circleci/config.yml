@@ -66,7 +66,7 @@ jobs:
       - checkout
       - build
       - test
-  deploy_code:
+  deploy:
     executor: android
     steps:
       - checkout
@@ -80,7 +80,6 @@ workflows:
           context: MOBILE_DEV
           requires:
             - validate_code
-            - deploy_code
           filters:
             branches:
               only: develop
@@ -88,7 +87,6 @@ workflows:
           context: MOBILE_PROD
           requires:
             - validate_code
-            - deploy_code
           filters:
             branches:
               only: master
