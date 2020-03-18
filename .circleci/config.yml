@@ -82,7 +82,7 @@ jobs:
 workflows:
   ma-retail-android_workflow:
     jobs:
-      - validate_code:
+      - build_test:
           context: BUILD
       - deploy:
           context: MOBILE_DEV
