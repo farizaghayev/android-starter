@@ -1,11 +1,16 @@
+base_job: &base_job
+  resource_class: xlarge
+  docker:
+    - image: circleci/android:api-29
+  working_directory: '~/project'
+  environment:
+    ADB_INSTALL_TIMEOUT: 8
+    GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
+
 version: 2
 jobs:
   build:
-    working_directory: ~/code
-    docker:
-      - image: circleci/android:api-29
-    environment:
-      JVM_OPTS: -Xmx3200m
+    <<: *base_job
     steps:
       - checkout
       - restore_cache:
@@ -20,6 +25,17 @@ jobs:
           paths:
             - ~/.gradle
           key: jars-{{ checksum "build.gradle" }}-{{ checksum  "app/build.gradle" }}
+  test:
+    <<: *base_job
+    steps:
+      - checkout
+      - restore_cache:
+          key: jars-{{ checksum "build.gradle" }}-{{ checksum  "app/build.gradle" }}
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: Chmod permissions
+          command: sudo chmod +x ./gradlew
       - run:
           name: Run Tests
           command: ./gradlew lint test
@@ -47,11 +63,44 @@ jobs:
             sudo gcloud firebase test android run \
               --app app/build/outputs/apk/debug/app-debug.apk \
               --test app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+
+  deployment:
+    <<: *base_job
+    steps:
+      - checkout
+      - restore_cache:
+          key: jars-{{ checksum "build.gradle" }}-{{ checksum  "app/build.gradle" }}
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: Chmod permissions
+          command: sudo chmod +x ./gradlew
       - run:
           name: Install fastlane
           command: bundle install
       - run:
           name: Run the unit tests
           command: bundle exec fastlane unit_tests
-      - store_artifacts:
-          path: app/build/reports
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - build
+      - test:
+          requires:
+            - build
+      - deployment:
+          requires:
+            - build
+            - test
+          filters:
+            branches:
+              only: master
+
+experimental:
+  notify:
+    branches:
+      only:
+        - master
+        - development
