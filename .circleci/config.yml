@@ -79,14 +79,14 @@ workflows:
     jobs:
       - validate_code:
           context: BUILD
-      - deploy:
+      - deploy_code:
           context: GOOGLE_PLAY_BETA
           requires:
             - validate_code
           filters:
             branches:
               only: develop
-      - deploy:
+      - deploy_code:
           context: GOOGLE_PLAY_PROD
           requires:
             - validate_code
