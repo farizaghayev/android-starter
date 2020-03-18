@@ -178,3 +178,5 @@ fabric.properties
 !/fastlane/.env
 !/fastlane/keys/
 !/Gemfile.lock
+!/fastlane/api-7320264473279158214-729085-c89c8d5b05a0.json
+!/fastlane/test.jks

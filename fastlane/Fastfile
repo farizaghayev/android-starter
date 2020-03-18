@@ -1,14 +1,62 @@
 default_platform(:android)
 
 platform :android do
-  desc "Run beta deployment"
-  lane :beta do
-    gradle(task: "test")
+
+  def increment_version_code()
+    path = '../app/build.gradle'
+    re = /versionCode\s+(\d+)/
+
+    s = File.read(path)
+    versionCode = s[re, 1].to_i
+    s[re, 1] = (versionCode + 1).to_s
+
+    f = File.new(path, 'w')
+    f.write(s)
+    f.close
   end
 
-  desc "Run prod deployment"
-  lane :prod do
-    gradle(task: "assembleDebug")
+  desc "Deploy a new version to the Google Play"
+  lane :deploy do
+    increment_version_code()
+
+    gradle(
+      task: "clean assemble",
+      build_type: "Release",
+      print_command: false,
+      properties: {
+        "android.injected.signing.store.file" => "keystore.jks",
+        "android.injected.signing.store.password" => ENV["STORE_PASSWORD"],
+        "android.injected.signing.key.alias" => ENV["KEY_ALIAS"],
+        "android.injected.signing.key.password" => ENV["KEY_PASSWORD"],
+      },
+    )
+    file_path = lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]
+    file_name = file_path.gsub(/\/.*\//, "")
+    upload_to_play_store(
+      track: ENV["PLAY_STORE_TRACK"],
+      apk: file_path,
+      json_key: "gcloud-service-account.json",
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+    )
+
+    notify_slack("Deployed a new android app version to the Google Play : https://play.google.com/store/apps/details?id=" + ENV["PACKAGE_ID"])
   end
 
+  def notify_slack(message_text)
+    slack(
+      message: message_text,
+      fail_on_error: false,
+      slack_url: ENV["SLACK_URL"],
+      default_payloads: [:git_branch, :git_author, :last_git_commit_hash],
+    )
+  end
+
+  error do |lane, exception|
+    slack(
+      message: exception.message,
+      success: false,
+    )
+  end
 end

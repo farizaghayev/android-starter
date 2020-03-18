@@ -10,10 +10,10 @@ android {
     compileSdkVersion 29
     buildToolsVersion "29.0.1"
     defaultConfig {
-        applicationId "com.example.android.dagger"
+        applicationId "com.pasha.dagger"
         minSdkVersion 14
         targetSdkVersion 29
-        versionCode 1
+        versionCode 19
         versionName "1.0"
         testInstrumentationRunner "com.example.android.dagger.MyCustomTestRunner"
     }

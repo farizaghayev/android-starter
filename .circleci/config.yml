@@ -39,9 +39,14 @@ commands:
           name: Install fastlane
           command: bundle install
       - run:
+          name: Decode Android key store
+          command: echo $KEYSTORE_BASE64 | base64 -di | tee keystore.jks app/keystore.jks >/dev/null
+      - run:
+          name: Store Google Service Account
+          command: echo $PLAY_STORE_SERVICE_ACCOUNT_FILE > ${HOME}/gcloud-service-account .json
+      - run:
           name: Deploy to (Google Play)
-          command: bundle exec fastlane $DEPLOY_TRACK
-
+          command: bundle exec fastlane deploy
 jobs:
   build_test:
     executor: android
