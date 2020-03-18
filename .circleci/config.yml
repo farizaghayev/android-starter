@@ -39,7 +39,7 @@ commands:
           name: Install fastlane
           command: bundle install
       - run:
-          name: Deploy to $DEPLOY_TRACK track (Google Play)
+          name: Deploy to (Google Play)
           command: bundle exec fastlane $DEPLOY_TRACK
 
 jobs:
