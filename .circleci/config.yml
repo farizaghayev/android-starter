@@ -39,8 +39,8 @@ commands:
           name: Install fastlane
           command: bundle install
       - run:
-          name: Deploy to ${DEPLOY_TRACK} track (Google Play)
-          command: bundle exec fastlane ${DEPLOY_TRACK}
+          name: Deploy to $DEPLOY_TRACK track (Google Play)
+          command: bundle exec fastlane $DEPLOY_TRACK
 
 jobs:
   build_test:
