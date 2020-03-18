@@ -70,7 +70,6 @@ jobs:
       - checkout
       - build
       - test
-      - fastlane_deploy
 workflows:
   ma-retail-android_workflow:
     jobs:
