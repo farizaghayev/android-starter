@@ -60,7 +60,7 @@ commands:
           name: Install fastlane
           command: bundle install
       - run:
-          name: Deploy a new version to Beta track (Google Play)
+          name: Deploy a new version to << parameters.to >> track (Google Play)
           command: bundle exec fastlane << parameters.to >>
 
 jobs:
