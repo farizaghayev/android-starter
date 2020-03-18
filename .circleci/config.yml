@@ -31,6 +31,8 @@ commands:
           destination: reports
       - store_test_results:
           path: app/build/test-results
+  firebase_instrument_test:
+    steps:
       - run:
           name: Build debug APK and release APK for Firebase Test Lab
           command: |
@@ -56,16 +58,22 @@ commands:
           name: Install fastlane
           command: bundle install
       - run:
-          name: Deploy a new version to ${DEPLOY_TRACK} track (Google Play)
+          name: Deploy to ${DEPLOY_TRACK} track (Google Play)
           command: bundle exec fastlane ${DEPLOY_TRACK}
 
 jobs:
-  validate_code:
+  build_test:
     executor: android
     steps:
       - checkout
       - build
       - test
+  instrument_test:
+    executor: android
+    steps:
+      - checkout
+      - firebase_instrument_test
+
   deploy:
     executor: android
     steps:
@@ -79,14 +87,15 @@ workflows:
       - deploy:
           context: MOBILE_DEV
           requires:
-            - validate_code
+            - build_test
           filters:
             branches:
               only: develop
       - deploy:
           context: MOBILE_PROD
           requires:
-            - validate_code
+            - build_test
+            - instrument_test
           filters:
             branches:
               only: master
