@@ -50,7 +50,7 @@ commands:
             sudo gcloud firebase test android run \
               --app app/build/outputs/apk/debug/app-debug.apk \
               --test app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
-  deployment:
+  fastlane_lane_beta:
     steps:
       - run:
           name: Install fastlane
@@ -59,6 +59,14 @@ commands:
           name: Deploy a new version to Beta track (Google Play)
           command: bundle exec fastlane unit_tests
 
+  fastlane_lane_prod:
+    steps:
+      - run:
+          name: Install fastlane
+          command: bundle install
+      - run:
+          name: Deploy a new version to Prod track (Google Play)
+          command: bundle exec fastlane unit_tests
 
 jobs:
   validate_code:
@@ -67,29 +75,35 @@ jobs:
       - checkout
       - build
       - test
-  deploy_code:
+  deploy_beta:
     executor: android
     steps:
       - checkout
       - build
       - test
-      - deployment
+      - fastlane_lane_beta
+  deploy_prod:
+    executor: android
+    steps:
+      - checkout
+      - build
+      - test
+      - fastlane_lane_prod
 workflows:
   ma-retail-android_workflow:
     jobs:
       - validate_code:
-          context: BUILD
       - deploy_code:
-          context: GOOGLE_PLAY_BETA
           requires:
             - validate_code
+            - deploy_beta
           filters:
             branches:
               only: develop
       - deploy_code:
-          context: GOOGLE_PLAY_PROD
           requires:
             - validate_code
+            - deploy_prod
           filters:
             branches:
               only: master
