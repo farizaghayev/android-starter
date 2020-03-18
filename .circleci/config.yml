@@ -51,17 +51,13 @@ commands:
               --app app/build/outputs/apk/debug/app-debug.apk \
               --test app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
   fastlane_deploy:
-    parameters:
-      to:
-        type: string
-        default: "unit_tests"
     steps:
       - run:
           name: Install fastlane
           command: bundle install
       - run:
-          name: Deploy a new version to << parameters.to >> track (Google Play)
-          command: bundle exec fastlane << parameters.to >>
+          name: Deploy a new version to ${DEPLOY_TRACK} track (Google Play)
+          command: bundle exec fastlane ${DEPLOY_TRACK}
 
 jobs:
   validate_code:
@@ -70,7 +66,29 @@ jobs:
       - checkout
       - build
       - test
+  deploy_code:
+    executor: android
+    steps:
+      - checkout
+      - fastlane_deploy
 workflows:
   ma-retail-android_workflow:
     jobs:
-      - validate_code
+      - validate_code:
+          context: BUILD
+      - deploy:
+          context: MOBILE_DEV
+          requires:
+            - validate_code
+            - deploy_code
+          filters:
+            branches:
+              only: develop
+      - deploy:
+          context: MOBILE_PROD
+          requires:
+            - validate_code
+            - deploy_code
+          filters:
+            branches:
+              only: master
