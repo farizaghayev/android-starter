@@ -84,6 +84,8 @@ workflows:
     jobs:
       - build_test:
           context: BUILD
+      - instrument_test:
+          context: BUILD
       - deploy:
           context: MOBILE_DEV
           requires:
