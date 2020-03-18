@@ -63,7 +63,7 @@ workflows:
             - build_test
           filters:
             branches:
-              only: develop
+              only: development
       - deploy:
           context: MOBILE_PROD
           requires:
