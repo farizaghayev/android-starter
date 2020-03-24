@@ -50,18 +50,16 @@ commands:
             BUILD_DIR=build_${CIRCLE_BUILD_NUM}
             sudo gcloud firebase test android run \
               --app app/build/outputs/apk/debug/app-debug.apk \
-              --test app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk \
-              --results-bucket cloud-test-${GOOGLE_PROJECT_ID} \
-              --results-dir=${BUILD_DIR}
-      - run:
-          name: Download results
-          command: |
-            BUILD_DIR=build_${CIRCLE_BUILD_NUM}
-            sudo pip install -U crcmod
-            mkdir firebase_test_results
-            sudo gsutil -m mv -r -U `sudo gsutil ls gs://cloud-test-${GOOGLE_PROJECT_ID}/${BUILD_DIR} | tail -1` firebase_test_results/ | true
-      - store_artifacts:
-          path: firebase_test_results
+              --test app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+#      - run:
+#          name: Download results
+#          command: |
+#            BUILD_DIR=build_${CIRCLE_BUILD_NUM}
+#            sudo pip install -U crcmod
+#            mkdir firebase_test_results
+#            sudo gsutil -m mv -r -U `sudo gsutil ls gs://cloud-test-${GOOGLE_PROJECT_ID}/${BUILD_DIR} | tail -1` firebase_test_results/ | true
+#      - store_artifacts:
+#          path: firebase_test_results
   fastlane_deploy:
     steps:
       - run:
