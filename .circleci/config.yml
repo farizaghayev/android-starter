@@ -81,7 +81,7 @@ commands:
           command: echo $KEYSTORE_BASE64 | base64 -di | tee keystore.jks app/keystore.jks >/dev/null
       - run:
           name: Store Google Service Account
-          command: echo $PLAY_STORE_SERVICE_ACCOUNT_FILE > ${HOME}/gcloud-service-account.json
+          command: echo $PLAY_STORE_SERVICE_ACCOUNT_FILE > gcloud-service-account.json
       - run:
           name: Deploy to (Google Play)
           command: bundle exec fastlane deploy
