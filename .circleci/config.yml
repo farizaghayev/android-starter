@@ -45,16 +45,17 @@ commands:
             sudo gcloud auth activate-service-account --key-file=${HOME}/gcloud-service-key.json
             sudo gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
       - run:
-          name: Build test and lint
+          name: Build gradle
           command: |
-            ./gradlew assembleMockDebug assembleProdDebug assembleMockDebugAndroidTest testMockDebug testProdDebug lintMockDebug lintProdDebu
+            sudo chmod +x ./gradlew
+            ./gradlew assembleMockDebug assembleProdDebug assembleMockDebugAndroidTest testMockDebug testProdDebug
       - run:
           name: Test with Firebase Test Lab
           command: |
             BUILD_DIR=build_${CIRCLE_BUILD_NUM}
             sudo gcloud firebase test android run \
               --app app/build/outputs/apk/mock/debug/app-mock-debug.apk \
-              --test app/build/outputs/apk/androidTest/mock/debug/app-mock-debug-androidTest.apk 
+              --test app/build/outputs/apk/androidTest/mock/debug/app-mock-debug-androidTest.apk
 #      - run:
 #          name: Download results
 #          command: |
