@@ -5,6 +5,10 @@ executors:
     docker:
       - image: circleci/android:api-29
     working_directory: ~/ma-retail-android
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xmx1024m -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap"
+      GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.workers.max=2 -Djava.util.concurrent.ForkJoinPool.common.parallelism=2 -Dkotlin.incremental=false"
+
 commands:
   build:
     steps:
@@ -30,6 +34,31 @@ commands:
           destination: reports
       - store_test_results:
           path: app/build/test-results
+  run_ftl:
+    - run:
+        name: Authorize gcloud and set config defaults
+        command: |
+          echo $PLAY_STORE_SERVICE_ACCOUNT_FILE | base64 -di > ${HOME}/gcloud-service-key.json
+          sudo gcloud auth activate-service-account --key-file=${HOME}/gcloud-service-key.json
+          sudo gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
+    - run:
+        name: Test with Firebase Test Lab
+        command: |
+          BUILD_DIR=build_${CIRCLE_BUILD_NUM}
+          sudo gcloud firebase test android run \
+            --app app/build/outputs/apk/debug/app-debug.apk \
+            --test app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk \
+            --results-bucket cloud-test-${GOOGLE_PROJECT_ID} \
+            --results-dir=${BUILD_DIR}
+    - run:
+        name: Download results
+        command: |
+          BUILD_DIR=build_${CIRCLE_BUILD_NUM}
+          sudo pip install -U crcmod
+          mkdir firebase_test_results
+          sudo gsutil -m mv -r -U `sudo gsutil ls gs://cloud-test-${GOOGLE_PROJECT_ID}/${BUILD_DIR} | tail -1` firebase_test_results/ | true
+    - store_artifacts:
+        path: firebase_test_results
   fastlane_deploy:
     steps:
       - run:
@@ -64,17 +93,21 @@ workflows:
     jobs:
       - build_test:
           context: BUILD
-      - deploy:
-          context: MOBILE_DEV
+      - run_ftl:
+          context: BUILD
           requires:
             - build_test
-          filters:
-            branches:
-              only: development
-      - deploy:
-          context: MOBILE_PROD
-          requires:
-            - build_test
-          filters:
-            branches:
-              only: master
+#      - deploy:
+#          context: MOBILE_DEV
+#          requires:
+#            - build_test
+#          filters:
+#            branches:
+#              only: development
+#      - deploy:
+#          context: MOBILE_PROD
+#          requires:
+#            - build_test
+#          filters:
+#            branches:
+#              only: master
