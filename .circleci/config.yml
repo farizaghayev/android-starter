@@ -5,6 +5,10 @@ executors:
     docker:
       - image: circleci/android:api-29
     working_directory: ~/ma-retail-android
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xmx1024m -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap"
+      GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.workers.max=2 -Djava.util.concurrent.ForkJoinPool.common.parallelism=2 -Dkotlin.incremental=false"
+
 commands:
   build:
     steps:
@@ -30,6 +34,40 @@ commands:
           destination: reports
       - store_test_results:
           path: app/build/test-results
+  run_ftl:
+    steps:
+      - run:
+          name: Store Google Service Account
+          command: echo $PLAY_STORE_SERVICE_ACCOUNT_FILE > ${HOME}/gcloud-service-key.json
+      - run:
+          name: Authorize gcloud and set config defaults
+          command: |
+            sudo gcloud auth activate-service-account --key-file=${HOME}/gcloud-service-key.json
+            sudo gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
+      - run:
+          name: Build debug APK and release APK
+          command: |
+            sudo chmod +x ./gradlew
+            ./gradlew :app:assembleDebug
+            ./gradlew :app:assembleDebugAndroidTest
+      - run:
+          name: Instrumentation Test with Firebase Test Lab
+          command: |
+            BUILD_DIR=build_${CIRCLE_BUILD_NUM}
+            sudo gcloud firebase test android run \
+              --type instrumentation \
+              --app app/build/outputs/apk/debug/app-debug.apk \
+              --test app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk \
+              --device model=Nexus6,version=21,locale=en,orientation=portrait
+      - run:
+          name: Robo Test with Firebase Test Lab
+          command: |
+            BUILD_DIR=build_${CIRCLE_BUILD_NUM}
+            sudo gcloud firebase test android run \
+              --type robo \
+              --app app/build/outputs/apk/debug/app-debug.apk \
+              --device model=Nexus6,version=21,locale=en,orientation=portrait  \
+              --timeout 90s
   fastlane_deploy:
     steps:
       - run:
@@ -54,6 +92,11 @@ jobs:
       - checkout
       - build
       - test
+  firebase_test_lab:
+    executor: android
+    steps:
+      - checkout
+      - run_ftl
   deploy:
     executor: android
     steps:
@@ -64,6 +107,15 @@ workflows:
     jobs:
       - build_test:
           context: BUILD
+      - firebase_test_lab:
+          context: BUILD
+          requires:
+            - build_test
+          filters:
+            branches:
+              only:
+                - development
+                - master
       - deploy:
           context: MOBILE_DEV
           requires:
