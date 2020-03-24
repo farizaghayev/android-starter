@@ -45,26 +45,29 @@ commands:
             sudo gcloud auth activate-service-account --key-file=${HOME}/gcloud-service-key.json
             sudo gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
       - run:
-          name: Build gradle
+          name: Build debug APK and release APK
           command: |
             sudo chmod +x ./gradlew
-            ./gradlew assembleMockDebug assembleProdDebug assembleMockDebugAndroidTest testMockDebug testProdDebug
+            ./gradlew :app:assembleDebug
+            ./gradlew :app:assembleDebugAndroidTest
       - run:
-          name: Test with Firebase Test Lab
+          name: Instrumentation Test with Firebase Test Lab
           command: |
             BUILD_DIR=build_${CIRCLE_BUILD_NUM}
             sudo gcloud firebase test android run \
-              --app app/build/outputs/apk/mock/debug/app-mock-debug.apk \
-              --test app/build/outputs/apk/androidTest/mock/debug/app-mock-debug-androidTest.apk
-#      - run:
-#          name: Download results
-#          command: |
-#            BUILD_DIR=build_${CIRCLE_BUILD_NUM}
-#            sudo pip install -U crcmod
-#            mkdir firebase_test_results
-#            sudo gsutil -m mv -r -U `sudo gsutil ls gs://cloud-test-${GOOGLE_PROJECT_ID}/${BUILD_DIR} | tail -1` firebase_test_results/ | true
-#      - store_artifacts:
-#          path: firebase_test_results
+              --type instrumentation \
+              --app app/build/outputs/apk/debug/app-debug.apk \
+              --test app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk \
+              --device model=Nexus6,version=21,locale=en,orientation=portrait
+      - run:
+          name: Robo Test with Firebase Test Lab
+          command: |
+            BUILD_DIR=build_${CIRCLE_BUILD_NUM}
+            sudo gcloud firebase test android run \
+              --type robo \
+              --app app/build/outputs/apk/debug/app-debug.apk \
+              --device model=Nexus6,version=21,locale=en,orientation=portrait  \
+              --timeout 90s
   fastlane_deploy:
     steps:
       - run:
@@ -108,17 +111,22 @@ workflows:
           context: BUILD
           requires:
             - build_test
-#      - deploy:
-#          context: MOBILE_DEV
-#          requires:
-#            - build_test
-#          filters:
-#            branches:
-#              only: development
-#      - deploy:
-#          context: MOBILE_PROD
-#          requires:
-#            - build_test
-#          filters:
-#            branches:
-#              only: master
+          filters:
+            branches:
+              only:
+                - development
+                - master
+      - deploy:
+          context: MOBILE_DEV
+          requires:
+            - build_test
+          filters:
+            branches:
+              only: development
+      - deploy:
+          context: MOBILE_PROD
+          requires:
+            - build_test
+          filters:
+            branches:
+              only: master
