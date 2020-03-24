@@ -38,7 +38,7 @@ commands:
     steps:
       - run:
           name: Store Google Service Account
-          command: echo $PLAY_STORE_SERVICE_ACCOUNT_FILE > ${HOME}/gcloud-service-key.json
+          command: echo $GCLOUD_SERVICE_KEY > ${HOME}/gcloud-service-key.json
       - run:
           name: Authorize gcloud and set config defaults
           command: |
@@ -81,7 +81,7 @@ commands:
           command: echo $KEYSTORE_BASE64 | base64 -di | tee keystore.jks app/keystore.jks >/dev/null
       - run:
           name: Store Google Service Account
-          command: echo $PLAY_STORE_SERVICE_ACCOUNT_FILE > gcloud-service-account.json
+          command: echo $PLAY_STORE_SERVICE_ACCOUNT_FILE > ${HOME}/gcloud-service-account.json
       - run:
           name: Deploy to (Google Play)
           command: bundle exec fastlane deploy
@@ -120,6 +120,7 @@ workflows:
           context: MOBILE_DEV
           requires:
             - build_test
+            - firebase_test_lab
           filters:
             branches:
               only: development
@@ -127,6 +128,7 @@ workflows:
           context: MOBILE_PROD
           requires:
             - build_test
+            - firebase_test_lab
           filters:
             branches:
               only: master
