@@ -83,6 +83,11 @@ jobs:
       - checkout
       - build
       - test
+  firebase_test_lab:
+    executor: android
+    steps:
+      - checkout
+      - run_ftl
   deploy:
     executor: android
     steps:
@@ -93,7 +98,7 @@ workflows:
     jobs:
       - build_test:
           context: BUILD
-      - run_ftl:
+      - firebase_test_lab:
           context: BUILD
           requires:
             - build_test
