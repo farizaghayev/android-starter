@@ -54,7 +54,7 @@ commands:
             BUILD_DIR=build_${CIRCLE_BUILD_NUM}
             sudo gcloud firebase test android run \
               --app app/build/outputs/apk/mock/debug/app-mock-debug.apk \
-              --test app/build/outputs/apk/androidTest/mock/debug/app-mock-debug-androidTest.apk \
+              --test app/build/outputs/apk/androidTest/mock/debug/app-mock-debug-androidTest.apk 
 #      - run:
 #          name: Download results
 #          command: |
