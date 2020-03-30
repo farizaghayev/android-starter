@@ -13,16 +13,23 @@ android {
         applicationId "com.pasha.dagger"
         minSdkVersion 14
         targetSdkVersion 29
-        versionCode 19
+        versionCode 22
         versionName "1.0"
         testInstrumentationRunner "com.example.android.dagger.MyCustomTestRunner"
     }
     buildTypes {
+        debug {
+            applicationIdSuffix ".debug"
+            debuggable true
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
     sourceSets {
         String sharedTestDir = 'src/sharedTest/java'
         test {
@@ -31,6 +38,22 @@ android {
         androidTest {
             java.srcDir sharedTestDir
         }
+    }
+
+    flavorDimensions "enviroment"
+    productFlavors {
+        dev {
+            applicationId defaultConfig.applicationId
+            versionName defaultConfig.versionName + "-dev"
+        }
+        prod {
+            applicationId defaultConfig.applicationId
+            versionName defaultConfig.versionName + "-prod"
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 }
 

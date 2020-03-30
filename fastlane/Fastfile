@@ -16,12 +16,13 @@ platform :android do
   end
 
   desc "Deploy a new version to the Google Play"
-  lane :deploy do
+  lane :deploy do |options|
     increment_version_code()
 
     gradle(
       task: "clean assemble",
       build_type: "Release",
+      flavor: options[:flavor],
       print_command: false,
       properties: {
         "android.injected.signing.store.file" => "keystore.jks",
@@ -41,7 +42,7 @@ platform :android do
       skip_upload_screenshots: true,
     )
 
-    notify_slack("Deployed a new android app version to the Google Play : https://play.google.com/store/apps/details?id=" + ENV["PACKAGE_ID"])
+    notify_slack("New android app version deployed to the Google Play")
   end
 
   def notify_slack(message_text)
