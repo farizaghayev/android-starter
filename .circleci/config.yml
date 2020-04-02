@@ -48,8 +48,6 @@ commands:
       - run:
           name: Deploy to (Google Play)
           command: |
-            bundle exec fastlane env
-            bundle exec fastlane supply init
             if [ "$CIRCLE_BRANCH" != "master" ]; then
               bundle exec fastlane deploy flavor:"dev"
             else
