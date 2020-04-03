@@ -5,6 +5,13 @@ platform :android do
 
   desc "Deploy a new version to the Google Play"
   lane :deploy do |options|
+    # Get the last version code and increment it.
+    versionCode = File.read("metadata/versionCode").to_i
+    versionCode = versionCode +1
+
+    f = File.new("metadata/versionCode", "w")
+    f.write(versionCode)
+    f.close
 
     gradle(
       task: "clean assemble",
@@ -16,9 +23,10 @@ platform :android do
         "android.injected.signing.store.password" => ENV["STORE_PASSWORD"],
         "android.injected.signing.key.alias" => ENV["KEY_ALIAS"],
         "android.injected.signing.key.password" => ENV["KEY_PASSWORD"],
-        "versionCode" => ENV["CIRCLE_BUILD_NUM"] || 1
-      },
+        "versionCode" => versionCode
+      }
     )
+    
     file_path = lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]
     file_name = file_path.gsub(/\/.*\//, "")
     upload_to_play_store(
