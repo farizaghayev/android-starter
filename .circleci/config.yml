@@ -46,6 +46,9 @@ commands:
           name: Store Google Service Account
           command: echo $PLAY_STORE_SERVICE_ACCOUNT_FILE > gcloud-service-account.json
       - run:
+          name: "The number of the CircleCI build."
+          command: echo ${CIRCLE_BUILD_NUM}
+      - run:
           name: Deploy to (Google Play)
           command: |
             if [ "$CIRCLE_BRANCH" != "master" ]; then
@@ -53,6 +56,7 @@ commands:
             else
               bundle exec fastlane deploy flavor:"prod"
             fi
+  The number of the CircleCI build
 
 jobs:
   build_test:
