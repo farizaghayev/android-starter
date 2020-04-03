@@ -13,7 +13,7 @@ android {
         applicationId "com.pasha.dagger"
         minSdkVersion 14
         targetSdkVersion 29
-        versionCode 22
+        versionCode incrementVersionCode() as int
         versionName "1.0"
         testInstrumentationRunner "com.example.android.dagger.MyCustomTestRunner"
     }
@@ -55,6 +55,16 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+}
+
+static def incrementVersionCode() {
+    def versionCode = 15
+    def buildNumber = System.getenv("CIRCLE_BUILD_NUM")
+    if (buildNumber != null) {
+        versionCode += buildNumber
+    }
+    println("VersionCode: " + versionCode)
+    return versionCode
 }
 
 dependencies {

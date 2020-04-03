@@ -2,23 +2,8 @@ default_platform(:android)
 
 platform :android do
 
-  def increment_version_code()
-    path = '../app/build.gradle'
-    re = /versionCode\s+(\d+)/
-
-    s = File.read(path)
-    versionCode = s[re, 1].to_i
-    s[re, 1] = (versionCode + ENV["CIRCLE_BUILD_NUM"] + 1).to_s
-
-    f = File.new(path, 'w')
-    f.write(s)
-    f.close
-  end
-
   desc "Deploy a new version to the Google Play"
   lane :deploy do |options|
-
-    increment_version_code()
 
     gradle(
       task: "clean assemble",
