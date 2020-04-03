@@ -5,7 +5,7 @@ platform :android do
 
   desc "Deploy a new version to the Google Play"
   lane :deploy do |options|
-    # Get the last version code and increment it.
+  
     versionCode = File.read("metadata/versionCode").to_i
     versionCode = versionCode +1
 
