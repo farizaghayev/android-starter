@@ -2,16 +2,23 @@ default_platform(:android)
 
 platform :android do
 
+  def increment_version_code()
+    path = '../app/build.gradle'
+    re = /versionCode\s+(\d+)/
+
+    s = File.read(path)
+    versionCode = s[re, 1].to_i
+    s[re, 1] = (versionCode + ENV["CIRCLE_BUILD_NUM"] + 1).to_s
+
+    f = File.new(path, 'w')
+    f.write(s)
+    f.close
+  end
 
   desc "Deploy a new version to the Google Play"
   lane :deploy do |options|
-  
-    versionCode = File.read("metadata/versionCode").to_i
-    versionCode = versionCode +1
 
-    f = File.new("metadata/versionCode", "w")
-    f.write(versionCode)
-    f.close
+    increment_version_code()
 
     gradle(
       task: "clean assemble",
@@ -22,9 +29,8 @@ platform :android do
         "android.injected.signing.store.file" => "keystore.jks",
         "android.injected.signing.store.password" => ENV["STORE_PASSWORD"],
         "android.injected.signing.key.alias" => ENV["KEY_ALIAS"],
-        "android.injected.signing.key.password" => ENV["KEY_PASSWORD"],
-        "versionCode" => versionCode
-      }
+        "android.injected.signing.key.password" => ENV["KEY_PASSWORD"]
+      },
     )
     file_path = lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]
     file_name = file_path.gsub(/\/.*\//, "")
